@@ -1,0 +1,17 @@
+{
+	"schemaVersion": 1,
+	"id": "nomovementcheck-gametest",
+	"version": "0.0.0",
+	"name": "nomovementcheck game tests",
+	"environment": "client",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"com.urntt.nomovementcheck.gametest.ConfigLogicGameTest",
+			"com.urntt.nomovementcheck.gametest.SettingsGameTest",
+			"com.urntt.nomovementcheck.gametest.MovementGameTest"
+		]
+	},
+	"depends": {
+		"nomovementcheck": "*"
+	}
+}
