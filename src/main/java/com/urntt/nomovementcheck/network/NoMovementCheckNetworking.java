@@ -32,7 +32,7 @@ public final class NoMovementCheckNetworking {
 		ServerPlayNetworking.registerGlobalReceiver(NoMovementCheckPayloads.SetPlayer.TYPE,
 				(payload, context) -> ifPermitted(context.player(), config -> setPlayer(context.server(), config, payload)));
 		ServerPlayNetworking.registerGlobalReceiver(NoMovementCheckPayloads.AddPlayer.TYPE,
-				(payload, context) -> ifPermitted(context.player(), config -> addPlayer(context.player(), config, payload.name())));
+				(payload, context) -> ifPermitted(context.player(), config -> addPlayer(context.server(), context.player(), config, payload.name())));
 	}
 
 	/**
@@ -96,10 +96,11 @@ public final class NoMovementCheckNetworking {
 	 * Gives the named player a setting of their own, opposite to the default, unless they already have one. The
 	 * name is resolved the same way the command resolves player names, so offline players work too.
 	 */
-	private static void addPlayer(final ServerPlayer sender, final NoMovementCheckConfig config, final String name) {
+	private static void addPlayer(
+			final MinecraftServer server, final ServerPlayer sender, final NoMovementCheckConfig config, final String name) {
 		Optional<NameAndId> resolved = name.isBlank() || !StringUtil.isValidPlayerName(name)
 				? Optional.empty()
-				: sender.level().getServer().services().nameToIdCache().get(name);
+				: server.services().nameToIdCache().get(name);
 		if (resolved.isEmpty()) {
 			ServerPlayNetworking.send(sender, new NoMovementCheckPayloads.PlayerNotFound(name));
 			return;

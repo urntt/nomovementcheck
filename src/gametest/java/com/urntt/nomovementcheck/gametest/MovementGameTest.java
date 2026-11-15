@@ -54,6 +54,8 @@ public final class MovementGameTest implements FabricClientGameTest {
 	/** The block the player stands in at the start of each scenario, and the bottom center of it. */
 	private BlockPos base;
 	private Vec3 start;
+	/** Where the boat scenarios place their boat: beside the wall, away from the player's start. */
+	private Vec3 boatStart;
 
 	@Override
 	public void runTest(final ClientGameTestContext context) {
@@ -188,12 +190,11 @@ public final class MovementGameTest implements FabricClientGameTest {
 	 * Places the boat the player steers at an offset from where it was and lets the client report it.
 	 */
 	private void checkVehicleMove(final String scenario, final Vec3 offset) {
-		Vec3 vehicleStart = this.start.add(0.0, 0.0, 8.0);
-		Vec3 target = vehicleStart.add(offset);
+		Vec3 target = this.boatStart.add(offset);
 
 		for (boolean exempt : new boolean[] {false, true}) {
 			this.beginScenario(exempt);
-			this.mountBoat(vehicleStart);
+			this.mountBoat(this.boatStart);
 
 			this.context.runOnClient(client -> client.player.getRootVehicle().setPos(target));
 			this.settle();
@@ -207,9 +208,9 @@ public final class MovementGameTest implements FabricClientGameTest {
 				check(serverPos.distanceTo(clientPos) < VEHICLE_TOLERANCE, scenario + ": the server should adopt the position of an exempt player's vehicle");
 			} else {
 				LOGGER.info("{}, not exempt: client vehicle {} from its start, server vehicle {} from its start",
-						scenario, distance(clientPos, vehicleStart), distance(serverPos, vehicleStart));
-				check(clientPos.distanceTo(vehicleStart) < VEHICLE_TOLERANCE, scenario + ": the vehicle of a player that is not exempt should be reset");
-				check(serverPos.distanceTo(vehicleStart) < VEHICLE_TOLERANCE, scenario + ": the server should reject the vehicle position of a player that is not exempt");
+						scenario, distance(clientPos, this.boatStart), distance(serverPos, this.boatStart));
+				check(clientPos.distanceTo(this.boatStart) < VEHICLE_TOLERANCE, scenario + ": the vehicle of a player that is not exempt should be reset");
+				check(serverPos.distanceTo(this.boatStart) < VEHICLE_TOLERANCE, scenario + ": the server should reject the vehicle position of a player that is not exempt");
 			}
 			this.dismount();
 		}
@@ -232,9 +233,8 @@ public final class MovementGameTest implements FabricClientGameTest {
 		check(millis < MAX_FAR_MOVE_MILLIS, "far move: took " + millis + " ms, so the server simulated the whole path");
 
 		this.beginScenario(true);
-		Vec3 vehicleStart = this.start.add(0.0, 0.0, 8.0);
-		Vec3 vehicleTarget = vehicleStart.add(offset);
-		this.mountBoat(vehicleStart);
+		Vec3 vehicleTarget = this.boatStart.add(offset);
+		this.mountBoat(this.boatStart);
 		long vehicleMillis = this.timeUntilServerHandled(client -> client.player.getRootVehicle().setPos(vehicleTarget));
 		Vec3 vehicleServerPos = this.serverVehiclePosition();
 		LOGGER.info("far vehicle move, exempt: handled in {} ms, server vehicle {} from the target",
@@ -278,8 +278,7 @@ public final class MovementGameTest implements FabricClientGameTest {
 	 */
 	private void checkHoveringInVehicle() {
 		String scenario = "hovering in a vehicle";
-		Vec3 vehicleStart = this.start.add(0.0, 0.0, 8.0);
-		Vec3 target = vehicleStart.add(0.0, 5.0, 0.0);
+		Vec3 target = this.boatStart.add(0.0, 5.0, 0.0);
 		Consumer<Minecraft> hover = client -> {
 			Entity vehicle = client.player.getRootVehicle();
 			vehicle.setNoGravity(true);
@@ -288,12 +287,12 @@ public final class MovementGameTest implements FabricClientGameTest {
 		};
 
 		this.beginScenario(false);
-		this.mountBoat(vehicleStart);
+		this.mountBoat(this.boatStart);
 		this.context.runOnClient(hover::accept);
 		this.expectKick(scenario);
 
 		this.beginScenario(true);
-		this.mountBoat(vehicleStart);
+		this.mountBoat(this.boatStart);
 		this.context.runOnClient(hover::accept);
 		this.context.waitTicks(HOVER_TICKS);
 		this.settle();
@@ -388,6 +387,7 @@ public final class MovementGameTest implements FabricClientGameTest {
 		this.context.waitFor(client -> client.player.onGround());
 		this.base = this.context.computeOnClient(client -> client.player.blockPosition());
 		this.start = Vec3.atBottomCenterOf(this.base);
+		this.boatStart = this.start.add(0.0, 0.0, 8.0);
 
 		BlockPos wallFrom = this.base.offset(2, 0, -2);
 		BlockPos wallTo = this.base.offset(2, 2, 10);

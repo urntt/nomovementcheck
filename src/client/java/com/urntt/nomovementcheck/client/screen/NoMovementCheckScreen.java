@@ -32,19 +32,24 @@ import org.jspecify.annotations.Nullable;
  * change is sent to the server, and the screen redraws when the server answers with the new state.
  */
 public final class NoMovementCheckScreen extends OptionsSubScreen {
+	/** Label of the switch that turns the whole mod on or off. */
+	public static final Component ENABLED = Component.translatable("options.nomovementcheck.enabled");
+	/** Label of the setting for players without their own setting. */
+	public static final Component DEFAULT = Component.translatable("options.nomovementcheck.default");
+	/** Label of the button that adds the typed player name. */
+	public static final Component ADD = Component.translatable("options.nomovementcheck.add");
+	/** Message for a typed name that belongs to no known player; takes the name. */
+	public static final String PLAYER_NOT_FOUND_KEY = "options.nomovementcheck.player_not_found";
+
 	private static final Component TITLE = Component.translatable("options.nomovementcheck.title");
-	private static final Component ENABLED = Component.translatable("options.nomovementcheck.enabled");
 	private static final Tooltip ENABLED_TOOLTIP = Tooltip.create(Component.translatable("options.nomovementcheck.enabled.tooltip"));
-	private static final Component DEFAULT = Component.translatable("options.nomovementcheck.default");
 	private static final Tooltip DEFAULT_TOOLTIP = Tooltip.create(Component.translatable("options.nomovementcheck.default.tooltip"));
 	private static final Component CHECKS_REMOVED = Component.translatable("options.nomovementcheck.value.true");
 	private static final Component CHECKS_KEPT = Component.translatable("options.nomovementcheck.value.false");
 	private static final String FOLLOWS_DEFAULT_KEY = "options.nomovementcheck.player.default";
 	private static final Component PLAYERS = Component.translatable("options.nomovementcheck.players");
-	private static final Component ADD = Component.translatable("options.nomovementcheck.add");
 	private static final Component ADD_HINT = Component.translatable("options.nomovementcheck.add.hint");
 	private static final Tooltip ADD_TOOLTIP = Tooltip.create(Component.translatable("options.nomovementcheck.add.tooltip"));
-	private static final String PLAYER_NOT_FOUND_KEY = "options.nomovementcheck.player_not_found";
 
 	/** Width of one of the two widgets in a row of the options list. */
 	private static final int SMALL_WIDGET_WIDTH = 150;

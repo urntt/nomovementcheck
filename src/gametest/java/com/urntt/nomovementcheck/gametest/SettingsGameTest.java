@@ -135,17 +135,17 @@ public final class SettingsGameTest implements FabricClientGameTest {
 	private void checkSettingsScreen(final KeyMapping settingsKey) {
 		this.pressSettingsKey(settingsKey);
 		this.context.waitForScreen(NoMovementCheckScreen.class);
-		check(Boolean.FALSE.equals(this.onClient(client -> cycleButton(client, "options.nomovementcheck.enabled").getValue())),
+		check(Boolean.FALSE.equals(this.onClient(client -> cycleButton(client, NoMovementCheckScreen.ENABLED).getValue())),
 				"the screen should show the mod as disabled");
 		this.takeScreenshot("nomovementcheck-settings");
 
-		this.press(client -> cycleButton(client, "options.nomovementcheck.enabled"));
+		this.press(client -> cycleButton(client, NoMovementCheckScreen.ENABLED));
 		check(this.onServer(server -> NoMovementCheck.config().isEnabled()), "the screen should enable the mod on the server");
 		check(NoMovementCheckConfig.load(NoMovementCheckConfig.defaultPath()).isEnabled(), "changes from the screen should be saved");
-		check(Boolean.TRUE.equals(this.onClient(client -> cycleButton(client, "options.nomovementcheck.enabled").getValue())),
+		check(Boolean.TRUE.equals(this.onClient(client -> cycleButton(client, NoMovementCheckScreen.ENABLED).getValue())),
 				"the screen should show the state the server confirmed");
 
-		this.press(client -> cycleButton(client, "options.nomovementcheck.default"));
+		this.press(client -> cycleButton(client, NoMovementCheckScreen.DEFAULT));
 		check(!this.onServer(server -> NoMovementCheck.config().appliesByDefault()), "the screen should change the default on the server");
 		check(!this.isExempt(), "with the default off, a player without their own setting should not be exempt");
 
@@ -166,7 +166,7 @@ public final class SettingsGameTest implements FabricClientGameTest {
 		check(this.onClient(client -> hasText(client, ALEX.name())), "the screen should list the added player");
 
 		this.addByName("not a name");
-		check(this.onClient(client -> hasText(client, Component.translatable("options.nomovementcheck.player_not_found", "not a name").getString())),
+		check(this.onClient(client -> hasText(client, Component.translatable(NoMovementCheckScreen.PLAYER_NOT_FOUND_KEY, "not a name").getString())),
 				"the screen should say that an invalid name was not found");
 		this.takeScreenshot("nomovementcheck-settings-changed");
 
@@ -323,12 +323,11 @@ public final class SettingsGameTest implements FabricClientGameTest {
 	private void addByName(final String name) {
 		this.context.runOnClient(client -> findWidget(client, EditBox.class, box -> true).setValue(name));
 		this.press(client -> findWidget(client, Button.class,
-				button -> button.getMessage().getString().equals(Component.translatable("options.nomovementcheck.add").getString())));
+				button -> button.getMessage().getString().equals(NoMovementCheckScreen.ADD.getString())));
 	}
 
-	private static CycleButton<?> cycleButton(final Minecraft client, final String nameKey) {
-		String name = Component.translatable(nameKey).getString();
-		return findWidget(client, CycleButton.class, button -> button.getMessage().getString().startsWith(name + ":"));
+	private static CycleButton<?> cycleButton(final Minecraft client, final Component name) {
+		return findWidget(client, CycleButton.class, button -> button.getMessage().getString().startsWith(name.getString() + ":"));
 	}
 
 	/**
