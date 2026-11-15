@@ -48,6 +48,8 @@ import net.minecraft.server.players.NameAndId;
 public final class SettingsGameTest implements FabricClientGameTest {
 	private static final String COMMAND = NoMovementCheck.MOD_ID;
 	private static final MouseButtonInfo LEFT_CLICK = new MouseButtonInfo(InputConstants.MOUSE_BUTTON_LEFT, 0);
+	/** A player who is not online. The server knows the name, as it would if the player had joined before. */
+	private static final NameAndId ALEX = new NameAndId(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Alex");
 
 	private ClientGameTestContext context;
 	private TestDedicatedServerContext server;
@@ -109,7 +111,7 @@ public final class SettingsGameTest implements FabricClientGameTest {
 		check(!this.onServer(server -> NoMovementCheck.config().isEnabled()), "a player without permission should not run the command");
 		this.pressSettingsKey(settingsKey);
 		check(!this.isSettingsScreenOpen(), "the settings screen should not open without permission");
-		this.context.takeScreenshot("nomovementcheck-no-permission");
+		this.takeScreenshot("nomovementcheck-no-permission");
 
 		// Level 3 (admins) is still below the required level 4.
 		this.setPermission(Optional.of(LevelBasedPermissionSet.ADMIN));
@@ -135,7 +137,7 @@ public final class SettingsGameTest implements FabricClientGameTest {
 		this.context.waitForScreen(NoMovementCheckScreen.class);
 		check(Boolean.FALSE.equals(this.onClient(client -> cycleButton(client, "options.nomovementcheck.enabled").getValue())),
 				"the screen should show the mod as disabled");
-		this.context.takeScreenshot("nomovementcheck-settings");
+		this.takeScreenshot("nomovementcheck-settings");
 
 		this.press(client -> cycleButton(client, "options.nomovementcheck.enabled"));
 		check(this.onServer(server -> NoMovementCheck.config().isEnabled()), "the screen should enable the mod on the server");
@@ -157,22 +159,21 @@ public final class SettingsGameTest implements FabricClientGameTest {
 		check(this.ownSetting().isEmpty(), "the third click should remove the player's own setting");
 
 		// Players who are not online are added by name and start opposite to the default.
-		this.addByName("Alex");
-		Optional<PlayerOverride> alex = this.onServer(server -> NoMovementCheck.config().overrides().stream()
-				.filter(override -> override.name().equals("Alex"))
-				.findFirst());
-		check(alex.isPresent() && alex.get().value(), "adding a name should give that player a setting opposite to the default");
-		check(this.onClient(client -> hasText(client, "Alex")), "the screen should list the added player");
+		this.server.runOnServer(server -> server.services().nameToIdCache().add(ALEX));
+		this.addByName(ALEX.name());
+		check(this.onServer(server -> NoMovementCheck.config().override(ALEX.id()).map(PlayerOverride::value)).equals(Optional.of(true)),
+				"adding a name should give that player a setting opposite to the default");
+		check(this.onClient(client -> hasText(client, ALEX.name())), "the screen should list the added player");
 
 		this.addByName("not a name");
 		check(this.onClient(client -> hasText(client, Component.translatable("options.nomovementcheck.player_not_found", "not a name").getString())),
 				"the screen should say that an invalid name was not found");
-		this.context.takeScreenshot("nomovementcheck-settings-changed");
+		this.takeScreenshot("nomovementcheck-settings-changed");
 
 		// Changes made elsewhere reach an open screen.
-		this.server.runCommand(COMMAND + " player Alex reset");
+		this.server.runCommand(COMMAND + " player " + ALEX.name() + " reset");
 		this.sync();
-		check(!this.onClient(client -> hasText(client, "Alex")), "the screen should follow changes made with the command");
+		check(!this.onClient(client -> hasText(client, ALEX.name())), "the screen should follow changes made with the command");
 
 		this.context.runOnClient(client -> client.gui.screen().onClose());
 		check(!this.isSettingsScreenOpen(), "closing the screen should return to the game");
@@ -180,7 +181,7 @@ public final class SettingsGameTest implements FabricClientGameTest {
 		this.setLanguage("zh_cn");
 		this.pressSettingsKey(settingsKey);
 		this.context.waitForScreen(NoMovementCheckScreen.class);
-		this.context.takeScreenshot("nomovementcheck-settings-zh_cn");
+		this.takeScreenshot("nomovementcheck-settings-zh_cn");
 		this.context.runOnClient(client -> client.gui.screen().onClose());
 		this.setLanguage("en_us");
 	}
@@ -202,7 +203,7 @@ public final class SettingsGameTest implements FabricClientGameTest {
 		this.server.runCommand(COMMAND + " player " + this.playerName + " reset");
 		check(this.ownSetting().isEmpty(), "reset should remove the player's own setting");
 
-		this.server.runCommand(COMMAND + " player Alex false");
+		this.server.runCommand(COMMAND + " player " + ALEX.name() + " false");
 		this.server.runCommand(COMMAND + " player @a true");
 		check(this.onServer(server -> NoMovementCheck.config().overrides().size()) == 2, "offline players should be set by name");
 		this.server.runCommand(COMMAND + " player clear");
@@ -288,6 +289,15 @@ public final class SettingsGameTest implements FabricClientGameTest {
 		this.connection.waitForServerboundPackets();
 		this.connection.waitForClientboundPackets();
 		this.context.waitTick();
+	}
+
+	/**
+	 * Takes a screenshot without the toasts that pop up after joining a server.
+	 */
+	private void takeScreenshot(final String name) {
+		this.context.runOnClient(client -> client.gui.toastManager().clear());
+		this.context.waitTick();
+		this.context.takeScreenshot(name);
 	}
 
 	private boolean isSettingsScreenOpen() {

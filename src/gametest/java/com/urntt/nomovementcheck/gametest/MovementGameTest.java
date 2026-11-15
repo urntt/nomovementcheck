@@ -19,6 +19,7 @@ import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -72,8 +73,10 @@ public final class MovementGameTest implements FabricClientGameTest {
 				this.checkVehicleMove("vehicle moving through a wall", new Vec3(4.0, 0.0, 0.0));
 				this.checkFarMoves();
 				this.checkHovering();
+				this.checkHoveringInVehicle();
 				this.checkPackets("two position packets in one tick", MovementGameTest::sendTwoPositions);
 				this.checkPackets("a position that is not a number", MovementGameTest::sendNotANumber);
+				this.checkPackets("a vehicle position that is not a number", MovementGameTest::sendVehicleNotANumber);
 				this.checkPackets("an unexpected teleport confirmation", MovementGameTest::sendTeleportConfirmations);
 			} finally {
 				this.disconnect();
@@ -190,9 +193,7 @@ public final class MovementGameTest implements FabricClientGameTest {
 
 		for (boolean exempt : new boolean[] {false, true}) {
 			this.beginScenario(exempt);
-			this.mount("minecraft:oak_boat", vehicleStart, "");
-			this.context.waitFor(client -> client.player.getRootVehicle().isLocalInstanceAuthoritative());
-			this.settle();
+			this.mountBoat(vehicleStart);
 
 			this.context.runOnClient(client -> client.player.getRootVehicle().setPos(target));
 			this.settle();
@@ -233,9 +234,7 @@ public final class MovementGameTest implements FabricClientGameTest {
 		this.beginScenario(true);
 		Vec3 vehicleStart = this.start.add(0.0, 0.0, 8.0);
 		Vec3 vehicleTarget = vehicleStart.add(offset);
-		this.mount("minecraft:oak_boat", vehicleStart, "");
-		this.context.waitFor(client -> client.player.getRootVehicle().isLocalInstanceAuthoritative());
-		this.settle();
+		this.mountBoat(vehicleStart);
 		long vehicleMillis = this.timeUntilServerHandled(client -> client.player.getRootVehicle().setPos(vehicleTarget));
 		Vec3 vehicleServerPos = this.serverVehiclePosition();
 		LOGGER.info("far vehicle move, exempt: handled in {} ms, server vehicle {} from the target",
@@ -275,6 +274,40 @@ public final class MovementGameTest implements FabricClientGameTest {
 	}
 
 	/**
+	 * The boat the player steers hovers in the air. Vanilla kicks the player for flying.
+	 */
+	private void checkHoveringInVehicle() {
+		String scenario = "hovering in a vehicle";
+		Vec3 vehicleStart = this.start.add(0.0, 0.0, 8.0);
+		Vec3 target = vehicleStart.add(0.0, 5.0, 0.0);
+		Consumer<Minecraft> hover = client -> {
+			Entity vehicle = client.player.getRootVehicle();
+			vehicle.setNoGravity(true);
+			vehicle.setPos(target);
+			vehicle.setDeltaMovement(Vec3.ZERO);
+		};
+
+		this.beginScenario(false);
+		this.mountBoat(vehicleStart);
+		this.context.runOnClient(hover::accept);
+		this.expectKick(scenario);
+
+		this.beginScenario(true);
+		this.mountBoat(vehicleStart);
+		this.context.runOnClient(hover::accept);
+		this.context.waitTicks(HOVER_TICKS);
+		this.settle();
+		check(this.isConnected(), scenario + ": an exempt player should not be kicked for flying");
+		Vec3 clientPos = this.context.computeOnClient(client -> client.player.getRootVehicle().position());
+		Vec3 serverPos = this.serverVehiclePosition();
+		LOGGER.info("{}, exempt: still connected after {} ticks, client vehicle {} from the target, server vehicle {} from the client's",
+				scenario, HOVER_TICKS, distance(clientPos, target), distance(serverPos, clientPos));
+		check(clientPos.distanceTo(target) < VEHICLE_TOLERANCE, scenario + ": an exempt player's vehicle should stay where it hovers");
+		check(serverPos.distanceTo(clientPos) < VEHICLE_TOLERANCE, scenario + ": the server should adopt the position of an exempt player's vehicle");
+		this.dismount();
+	}
+
+	/**
 	 * Sends packets that vanilla answers with a kick.
 	 */
 	private void checkPackets(final String scenario, final Consumer<Minecraft> sender) {
@@ -300,6 +333,12 @@ public final class MovementGameTest implements FabricClientGameTest {
 	private static void sendNotANumber(final Minecraft client) {
 		Vec3 position = client.player.position();
 		client.getConnection().send(new ServerboundMovePlayerPacket.Pos(Double.NaN, position.y, position.z, true, false));
+	}
+
+	private static void sendVehicleNotANumber(final Minecraft client) {
+		Vec3 position = client.player.position();
+		client.getConnection().send(new ServerboundMoveVehiclePacket(
+				PositionAndRotation.of(new Vec3(Double.NaN, position.y, position.z), 0.0F, 0.0F), true));
 	}
 
 	/**
@@ -362,9 +401,13 @@ public final class MovementGameTest implements FabricClientGameTest {
 	 */
 	private void beginScenario(final boolean exempt) {
 		this.server.runOnServer(server -> NoMovementCheck.config().setEnabled(exempt));
-		this.server.runCommand("tp %s %s %s %s".formatted(this.playerName, this.start.x, this.start.y, this.start.z));
-		this.context.waitFor(client -> client.player != null && client.player.position().distanceTo(this.start) < 0.1 && client.player.onGround());
+		// A player who was kicked while riding rejoins in the vehicle.
+		this.server.runCommand("ride %s dismount".formatted(this.playerName));
+		this.server.runCommand("kill @e[tag=%s]".formatted(TEST_ENTITY_TAG));
+		// A client that is still flying from an earlier scenario would not land.
 		this.context.runOnClient(client -> client.player.getAbilities().flying = false);
+		this.server.runCommand("tp %s %s %s %s".formatted(this.playerName, this.start.x, this.start.y, this.start.z));
+		this.context.waitFor(client -> client.player.position().distanceTo(this.start) < 0.1 && client.player.onGround());
 		this.settle();
 		check(this.serverPosition().distanceTo(this.start) < 0.1, "the player should be back at the start");
 	}
@@ -413,6 +456,15 @@ public final class MovementGameTest implements FabricClientGameTest {
 				entityType, position.x, position.y, position.z, extraData, TEST_ENTITY_TAG));
 		this.server.runCommand("ride %s mount @e[tag=%s,limit=1]".formatted(this.playerName, TEST_ENTITY_TAG));
 		this.context.waitFor(client -> client.player.isPassenger());
+		this.settle();
+	}
+
+	/**
+	 * Puts the player into a boat, which the client then steers and reports to the server.
+	 */
+	private void mountBoat(final Vec3 position) {
+		this.mount("minecraft:oak_boat", position, "");
+		this.context.waitFor(client -> client.player.getRootVehicle().isLocalInstanceAuthoritative());
 		this.settle();
 	}
 
