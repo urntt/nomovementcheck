@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.0.0+26.3] - 2026-11-15
+
 ### Added
 
 - Remove the server's movement checks for the players the mod applies to: speed, deviation and collision checks for players and vehicles, the kicks for floating, for several positions per tick and for invalid movement packets, the setback for moving while asleep, and the reset of vehicles the player does not control.
