@@ -41,7 +41,7 @@
 	"commands.nomovementcheck.player.reset.single": "%s 现在跟随默认",
 	"commands.nomovementcheck.player.reset.multiple": "%s 名玩家现在跟随默认",
 	"commands.nomovementcheck.player.reset.unchanged": "无变化。这些玩家没有单独设置",
-	"commands.nomovementcheck.player.list": "有 %s 名玩家单独设置：%s",
+	"commands.nomovementcheck.player.list": "单独设置的玩家（%s 名）：%s",
 	"commands.nomovementcheck.player.list.empty": "没有玩家单独设置",
 	"commands.nomovementcheck.player.list.entry.true": "%s（移除）",
 	"commands.nomovementcheck.player.list.entry.false": "%s（保留）",
