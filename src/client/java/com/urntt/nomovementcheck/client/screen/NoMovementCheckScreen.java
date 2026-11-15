@@ -58,6 +58,9 @@ public final class NoMovementCheckScreen extends OptionsSubScreen {
 	private String typedName = "";
 	private @Nullable Component error;
 	private @Nullable EditBox nameBox;
+	/** What the screen this one replaces looked like, restored once the widgets exist. */
+	private double initialScrollAmount;
+	private boolean initiallyFocusNameBox;
 
 	public NoMovementCheckScreen(
 			final @Nullable Screen lastScreen, final Options options, final NoMovementCheckPayloads.Settings settings) {
@@ -80,6 +83,23 @@ public final class NoMovementCheckScreen extends OptionsSubScreen {
 	public void showPlayerNotFound(final String name) {
 		this.error = Component.translatable(PLAYER_NOT_FOUND_KEY, name).withStyle(ChatFormatting.RED);
 		this.redraw();
+	}
+
+	@Override
+	protected void init() {
+		super.init();
+		// The message about a failed addition is the last row, so scroll down to it.
+		this.list.setScrollAmount(this.error != null ? this.list.maxScrollAmount() : this.initialScrollAmount);
+		if (this.initiallyFocusNameBox) {
+			this.focusInList(this.nameBox);
+		}
+	}
+
+	/**
+	 * Does nothing: unlike the vanilla option screens, this one changes no client options that would need saving.
+	 */
+	@Override
+	public void removed() {
 	}
 
 	@Override
@@ -169,20 +189,17 @@ public final class NoMovementCheckScreen extends OptionsSubScreen {
 	}
 
 	/**
-	 * Rebuilds the widgets from the current state, without losing the scroll position or the focus of the name box.
+	 * Shows the current state by replacing this screen with a new one, which keeps the scroll position, the typed
+	 * name, and the focus of the name box. The widgets live in the layout the vanilla base class creates once per
+	 * screen, so they cannot be rebuilt in place.
 	 */
 	private void redraw() {
-		if (this.list == null) {
-			return;
-		}
-
-		double scrollAmount = this.list.scrollAmount();
-		boolean nameBoxFocused = this.nameBox != null && this.nameBox.isFocused();
-		this.rebuildWidgets();
-		this.list.setScrollAmount(scrollAmount);
-		if (nameBoxFocused) {
-			this.focusInList(this.nameBox);
-		}
+		NoMovementCheckScreen replacement = new NoMovementCheckScreen(this.lastScreen, this.options, this.settings);
+		replacement.typedName = this.typedName;
+		replacement.error = this.error;
+		replacement.initialScrollAmount = this.list != null ? this.list.scrollAmount() : 0.0;
+		replacement.initiallyFocusNameBox = this.nameBox != null && this.nameBox.isFocused();
+		this.minecraft.gui.setScreen(replacement);
 	}
 
 	private void focusInList(final AbstractWidget widget) {

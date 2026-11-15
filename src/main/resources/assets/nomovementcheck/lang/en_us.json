@@ -15,7 +15,7 @@
 	"options.nomovementcheck.add": "Add",
 	"options.nomovementcheck.add.hint": "Player name",
 	"options.nomovementcheck.add.tooltip": "Gives a player who is not online their own setting.",
-	"options.nomovementcheck.player_not_found": "Player %s was not found",
+	"options.nomovementcheck.player_not_found": "Player \"%s\" was not found",
 	"commands.nomovementcheck.enabled.query.true": "nomovementcheck is enabled",
 	"commands.nomovementcheck.enabled.query.false": "nomovementcheck is disabled: movement checks are kept for every player",
 	"commands.nomovementcheck.enabled.set.true": "nomovementcheck is now enabled",

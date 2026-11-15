@@ -15,7 +15,7 @@
 	"options.nomovementcheck.add": "添加",
 	"options.nomovementcheck.add.hint": "玩家名",
 	"options.nomovementcheck.add.tooltip": "为不在线的玩家添加单独设置。",
-	"options.nomovementcheck.player_not_found": "找不到玩家 %s",
+	"options.nomovementcheck.player_not_found": "找不到玩家“%s”",
 	"commands.nomovementcheck.enabled.query.true": "nomovementcheck 已启用",
 	"commands.nomovementcheck.enabled.query.false": "nomovementcheck 已禁用：所有玩家都保留移动检测",
 	"commands.nomovementcheck.enabled.set.true": "已启用 nomovementcheck",
