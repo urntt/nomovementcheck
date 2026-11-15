@@ -48,7 +48,7 @@ The name is always written `nomovementcheck`, in one lowercase word: the mod ID,
   - The floating kicks for players and vehicles.
   - The kick for sending a second position packet within one client tick.
   - The kicks for non-finite coordinates and unexpected teleport confirmations. Such a packet is dropped instead, because it cannot be applied.
-  - The setback for moving while asleep. The server adopts the reported position. So that packets sent before the client knows it is asleep cannot drag the sleeper away from the bed, the server announces the bed position with a regular teleport when an exempt player falls asleep.
+  - The setback for moving while asleep. The server adopts the reported position. Vanilla announces the bed position with a regular teleport when a player falls asleep, so the server only sees positions the client sent after it knew about the bed.
   - The vehicle reset for a passenger that does not control its vehicle. The server moves the vehicle to the reported position.
 - A single packet that moves an exempt player or vehicle further than the vanilla speed limit is applied as a teleport: the server skips the path simulation (`move`), whose collision sweep covers the whole displacement and would stall the server for long distances. Movement within the vanilla limit is simulated exactly as in vanilla.
 - These stay vanilla for everyone: the coordinate range (X/Z ±30,000,000 and Y ±20,000,000; values beyond are clamped, not punished), ignoring movement until a server-initiated teleport is confirmed, ignoring movement until the client has finished loading, and ignoring a passenger's own position packets.
