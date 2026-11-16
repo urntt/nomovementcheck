@@ -58,7 +58,7 @@ The name is always written `nomovementcheck`, in one lowercase word: the mod ID,
 - The `/nomovementcheck` command requires permission level 4 (owners):
   - `/nomovementcheck` shows the current state.
   - `/nomovementcheck enabled [true|false]` and `/nomovementcheck default [true|false]` query or set the two switches.
-  - `/nomovementcheck player <targets> [true|false|reset]` queries, sets, or removes overrides. `<targets>` is a game profile argument: player names, including offline players, and selectors such as `@a`.
+  - `/nomovementcheck player <targets> [default|true|false]` queries a player's state or sets it to one of three values: `default` follows the default and removes the override, `true` and `false` set an override. `<targets>` is a game profile argument: player names, including offline players, and selectors such as `@a`.
   - `/nomovementcheck player list` and `/nomovementcheck player clear` list or remove all overrides.
 - Client part: a key binding, unbound by default, asks the server for the settings. The server answers only if the player has permission level 4, and the client then opens the settings screen. Every change made on the screen is sent to the server, which checks the permission again. Without the mod on the server, or without permission, the player only gets an action bar message. Whenever the settings change, the server sends the new state to every online player who has the mod and the permission.
 - The mod has no client-side settings and no client config file.

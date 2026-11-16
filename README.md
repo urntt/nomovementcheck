@@ -48,7 +48,7 @@ Whether the mod applies to a player is decided by three settings:
 | --- | --- | --- |
 | `enabled` | Turns the whole mod on or off. While it is off, every player keeps the vanilla checks. | `false` |
 | `default` | Whether the mod applies to players who have no setting of their own. | `true` |
-| Player settings | Individual players can be set to `true` or `false`, which overrides the default for them. | None |
+| Player settings | Each player is `default` (follows `default` above), `true`, or `false`. `true` and `false` override the default for that player. | `default` |
 
 For example, to trust only a few players, set `default` to `false` and set those players to `true`. To trust everyone except a few, leave `default` at `true` and set those players to `false`.
 
@@ -62,8 +62,8 @@ The command requires permission level 4 (server owners and the server console).
 | `/nomovementcheck enabled [true\|false]` | Shows or sets `enabled`. |
 | `/nomovementcheck default [true\|false]` | Shows or sets `default`. |
 | `/nomovementcheck player <targets>` | Shows what applies to the players. |
+| `/nomovementcheck player <targets> default` | Makes the players follow `default`, removing their own setting. |
 | `/nomovementcheck player <targets> true\|false` | Gives the players their own setting. |
-| `/nomovementcheck player <targets> reset` | Removes the players' own settings, so they follow the default again. |
 | `/nomovementcheck player list` | Lists the players that have their own setting. |
 | `/nomovementcheck player clear` | Removes every player's own setting. |
 

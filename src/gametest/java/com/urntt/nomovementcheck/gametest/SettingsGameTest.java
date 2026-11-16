@@ -171,7 +171,7 @@ public final class SettingsGameTest implements FabricClientGameTest {
 		this.takeScreenshot("nomovementcheck-settings-changed");
 
 		// Changes made elsewhere reach an open screen.
-		this.server.runCommand(COMMAND + " player " + ALEX.name() + " reset");
+		this.server.runCommand(COMMAND + " player " + ALEX.name() + " default");
 		this.sync();
 		check(!this.onClient(client -> hasText(client, ALEX.name())), "the screen should follow changes made with the command");
 
@@ -200,8 +200,14 @@ public final class SettingsGameTest implements FabricClientGameTest {
 
 		this.server.runCommand(COMMAND + " player " + this.playerName + " true");
 		check(this.ownSetting().equals(Optional.of(true)), "a name should set that player");
+		// "reset" was replaced by "default" and must no longer change anything.
 		this.server.runCommand(COMMAND + " player " + this.playerName + " reset");
-		check(this.ownSetting().isEmpty(), "reset should remove the player's own setting");
+		check(this.ownSetting().equals(Optional.of(true)), "reset should no longer be accepted");
+		this.server.runCommand(COMMAND + " player " + this.playerName + " default");
+		check(this.ownSetting().isEmpty(), "default should remove the player's own setting");
+		this.server.runCommand(COMMAND + " player " + this.playerName + " default");
+		check(this.ownSetting().isEmpty() && this.onServer(server -> NoMovementCheck.config().overrides().isEmpty()),
+				"default should change nothing for a player who already follows the default");
 
 		this.server.runCommand(COMMAND + " player " + ALEX.name() + " false");
 		this.server.runCommand(COMMAND + " player @a true");

@@ -47,12 +47,13 @@ public final class NoMovementCheckCommand {
 						.then(Commands.argument(TARGETS, GameProfileArgument.gameProfile())
 								.executes(context -> queryPlayers(
 										context.getSource(), GameProfileArgument.getGameProfiles(context, TARGETS)))
+								// Each player is in one of three states: following the default, or a setting of their own.
+								.then(Commands.literal("default").executes(context -> followDefault(
+										context.getSource(), GameProfileArgument.getGameProfiles(context, TARGETS))))
 								.then(Commands.literal("true").executes(context -> setPlayers(
 										context.getSource(), GameProfileArgument.getGameProfiles(context, TARGETS), true)))
 								.then(Commands.literal("false").executes(context -> setPlayers(
-										context.getSource(), GameProfileArgument.getGameProfiles(context, TARGETS), false)))
-								.then(Commands.literal("reset").executes(context -> resetPlayers(
-										context.getSource(), GameProfileArgument.getGameProfiles(context, TARGETS)))))));
+										context.getSource(), GameProfileArgument.getGameProfiles(context, TARGETS), false))))));
 	}
 
 	private static int showStatus(final CommandSourceStack source) {
@@ -124,14 +125,17 @@ public final class NoMovementCheckCommand {
 		return changed;
 	}
 
-	private static int resetPlayers(final CommandSourceStack source, final Collection<NameAndId> targets) {
+	/**
+	 * Removes the players' own settings, so they follow the default.
+	 */
+	private static int followDefault(final CommandSourceStack source, final Collection<NameAndId> targets) {
 		int changed = NoMovementCheck.config().removeOverrides(targets.stream().map(NameAndId::id).toList());
 		if (changed == 0) {
-			source.sendFailure(Texts.translatable("commands.nomovementcheck.player.reset.unchanged"));
+			source.sendFailure(Texts.translatable("commands.nomovementcheck.player.default.unchanged"));
 			return 0;
 		}
 
-		source.sendSuccess(() -> countedMessage("commands.nomovementcheck.player.reset", targets, changed), true);
+		source.sendSuccess(() -> countedMessage("commands.nomovementcheck.player.default", targets, changed), true);
 		return changed;
 	}
 

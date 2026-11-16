@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Set a player's state with `/nomovementcheck player <targets> default|true|false`. `default` replaces `reset` and makes the players follow the default again, matching the three states on the settings screen.
+
 ## [1.0.0+26.3] - 2026-11-15
 
 ### Added
