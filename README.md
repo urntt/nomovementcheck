@@ -85,8 +85,8 @@ The settings are saved to `config/nomovementcheck.json` on the server whenever t
   "default": false,
   "players": [
     {
-      "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
-      "name": "Notch",
+      "uuid": "a8edbef7-b3bd-46a5-89c2-9da6c276ca72",
+      "name": "urntt",
       "value": true
     }
   ]
